@@ -6,19 +6,23 @@ const App = () => {
   useEffect(() => {
     const loadRemoteComponent = async () => {
       try {
-        const response = await fetch('http://localhost:3000/remoteEntry.js'); // Adjust URL as needed
-        if (!response.ok) {
-          throw new Error('Failed to fetch remote entry file.');
-        }
-        const remoteScript = await response.text();
-        // Evaluate the remote script using eval()
-        eval(remoteScript);
-        const remoteContainer = window.remoteApp;
-        if (!remoteContainer) {
-          throw new Error('Remote container is not available.');
-        }
-        const remoteModule = await remoteContainer.get('./remoteApp');
-        setRemoteComponent(() => remoteModule.default);
+        // Create a script element
+        const script = document.createElement('script');
+        // Set the source URL of the remoteEntry.js file
+        script.src = 'http://localhost:3000/remoteEntry.js'; // Adjust the URL as needed
+        // Set the onload event handler to handle script loading
+        script.onload = async () => {
+          // After the script is loaded, access the remote container and load the remote module
+          const remoteContainer = window.remoteApp;
+          if (!remoteContainer) {
+            console.error('Remote container is not available.');
+            return;
+          }
+          const component = await remoteContainer.get('./remoteApp');
+          setRemoteComponent(() => component.default);
+        };
+        // Append the script tag to the document's head to initiate loading
+        document.head.appendChild(script);
       } catch (error) {
         console.error('Error loading remote component:', error);
       }
