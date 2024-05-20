@@ -1,24 +1,39 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import federation from '@originjs/vite-plugin-federation';
+import path from 'path';
 
-import { defineConfig } from 'vite'
-import federation from '@originjs/vite-plugin-federation'
-import react from '@vitejs/plugin-react'
-
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     federation({
-      name: 'hostApp',
       remotes: {
-        remoteApp: 'remoteApp@http://localhost:3000/remoteEntry.js',
+        // Correct the remote module definition
+        remoteApp: {
+          external: 'http://localhost:3000/remoteEntry.js',
+          format: 'var',
+          from: 'window.remoteApp'
+        },
       },
-      shared: ['react','react-dom']
-    })
+      shared: {
+        react: {
+          singleton: true,
+          requiredVersion: false,
+        },
+        'react-dom': {
+          singleton: true,
+          requiredVersion: false,
+        },
+      },
+    }),
   ],
-  build: {
-    modulePreload: false,
-    target: 'esnext',
-    minify: false,
-    cssCodeSplit: false
-  }
-})
+  resolve: {
+    alias: {
+      react: path.resolve('./node_modules/react'),
+      'react-dom': path.resolve('./node_modules/react-dom'),
+    },
+  },
+  server: {
+    port: 3001,
+  },
+});
